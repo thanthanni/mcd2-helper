@@ -122,6 +122,7 @@ ul.how{margin:6px 0;padding-left:18px}ul.how li{margin:3px 0}
 <section id="p-bosses" style="display:none"></section>
 <section id="p-hero" style="display:none">
  <div class="bar"><select id="hsel" style="display:none"></select><button id="hfile">캐릭터 파일 열기</button><input type="file" id="hinput" accept=".sav,.json" style="display:none"><button id="htop" style="display:none">항상 위에 고정</button><button id="hplan" style="display:none">빌드 짜기로 가져가기</button><span id="hstat" style="align-self:center;color:var(--mut);font-size:13px"></span></div>
+ <div id="hsync" style="display:none;font-size:13px;margin:4px 0 8px"></div>
  <div id="hbody"></div>
 </section>
 <section id="p-build" style="display:none">
@@ -356,16 +357,27 @@ $('#hplan').onclick=()=>{
  save();render();tab('build');
 };
 $('#htop').onclick=async()=>{topOn=!topOn;try{await fetch('/api/top?on='+(topOn?1:0),{method:'POST'});$('#htop').textContent=topOn?'항상 위 해제':'항상 위에 고정'}catch(e){}};
-function heroLabel(h){const d=new Date(h.mtime).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});return `레벨 ${h.level} · 파워 ${h.power} · 장비 ${h.gear}칸 · ${d}`}
-function bestHero(list){return list.find(h=>h.gear>0)||list[0]}
+function heroLabel(h){const d=new Date(h.mtime).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});return `${h.synced?'[온라인 연동] ':''}레벨 ${h.level} · 파워 ${h.power} · 장비 ${h.gear}칸 · ${d}`}
+function bestHero(list){return list.find(h=>h.synced)||list.find(h=>h.gear>0)||list[0]}
+function showSync(s){
+ const el=$('#hsync');if(!s){el.style.display='none';return}el.style.display='';
+ if(s.running)el.innerHTML='<span style="color:var(--ok,#5fe3b0)">● 온라인 캐릭터 자동 연동 켜짐</span> <small>게임 월드에 들어가 있으면 30초마다 갱신돼. 도우미를 닫으면 같이 꺼져.</small>';
+ else if(s.installing)el.innerHTML='<span>연동 프로그램 받는 중… (8MB, 잠깐만)</span>';
+ else if(s.found)el.innerHTML='<span>연동 프로그램 켜는 중…</span>'+(s.error?` <small>${esc(s.error)}</small>`:'');
+ else el.innerHTML='<span>온라인 캐릭터를 보려면 연동 프로그램이 필요해.</span> <button id="hsyncin">한 번에 설치</button>'+(s.error?` <small>${esc(s.error)}</small>`:'');
+ const b=$('#hsyncin');if(b)b.onclick=async()=>{b.disabled=true;b.textContent='받는 중…';try{await fetch('/api/sync/install',{method:'POST'})}catch(e){}};
+}
 async function pollHeroes(first){
  try{
   const j=await (await fetch('/api/heroes')).json();live=true;
   heroes=(j.heroes||[]).filter(h=>h.valid);
   $('#hfile').textContent='다른 파일 열기';$('#htop').style.display='';
   const sel=$('#hsel');
+  showSync(j.sync);
   let want=heroFile||localStorage.getItem('mcd2hero')||'';
-  if(!heroes.find(h=>h.name===want)){const b=bestHero(heroes);want=b?b.name:''}
+  const pick=heroes.find(h=>h.name===want),sy=heroes.find(h=>h.synced);
+  // 처음 열 때 온라인 연동 사본이 있으면 예전에 고른 오프라인 캐릭터보다 그걸 먼저 보여 준다.
+  if(!pick||(!heroFile&&!pick.synced&&sy)){const b=bestHero(heroes);want=b?b.name:''}
   if(heroes.length>1){sel.style.display='';sel.innerHTML=heroes.map(h=>`<option value="${esc(h.name)}">${esc(heroLabel(h))}</option>`).join('');sel.value=want}
   const cur=heroes.find(h=>h.name===want);
   if(cur&&(cur.name!==heroFile||cur.mtime!==heroMt)){heroFile=cur.name;heroMt=cur.mtime;const r=await fetch('/api/hero?name='+encodeURIComponent(cur.name));setHero(await r.text(),heroLabel(cur))}
