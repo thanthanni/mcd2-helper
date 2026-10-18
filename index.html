@@ -111,6 +111,25 @@ ul.how{margin:6px 0;padding-left:18px}ul.how li{margin:3px 0}
 .formula{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}.formula div{text-align:center;border:1px solid var(--line);border-radius:12px;padding:10px 6px;background:#1a1d23}.formula b{display:block;font-size:22px;color:var(--ac)}.formula small{color:var(--mut)}
 .note{color:var(--mut);font-size:12px}
 @media (max-width:640px){.trow{grid-template-columns:30px 1fr 56px}.trow .bar2{grid-column:1/-1}.bossrow{grid-template-columns:1fr 1fr}.gsearch{margin-left:0;width:100%}.gsearch input{width:100%}}
+
+/* ===== 사진·가독성 ===== */
+body{font-size:16px;line-height:1.65}
+.ico{width:28px;height:28px;object-fit:contain;vertical-align:middle;margin-right:8px;flex:0 0 auto;background:#14171c;border:1px solid var(--line);border-radius:6px;padding:2px}
+.ico.big{width:48px;height:48px;border-radius:8px;padding:3px}
+span.ico{display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--ac)}span.ico.big{font-size:18px}
+.nmw{display:flex;align-items:center;gap:2px;min-width:0}
+.trow{grid-template-columns:34px minmax(190px,1.3fr) 2fr 70px;padding:10px 12px}
+.trow .sub{font-size:13px}.tdesc{font-size:14px;line-height:1.6;color:#c9ced8}
+.hrow{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;margin-bottom:8px}.hmain{flex:1;min-width:0}
+.hrow .nm{font-size:16px}.hrow .ef{font-size:14.5px;line-height:1.65;color:#d6dae2;margin-top:4px}.hrow .en{font-size:14.5px;margin-top:4px}.hrow .sl{font-size:12.5px}
+.row{padding:10px 8px;display:block}.row .e{font-size:14.5px;line-height:1.65;color:#c3c8d2;margin-top:4px}.row small{color:var(--mut)}
+.pick{display:block;padding:10px}.pick small{font-size:13.5px;line-height:1.55;margin-top:4px}
+.dlg .pane{font-size:15.5px;line-height:1.7}.dlg ul.how li{margin:6px 0}.dh{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lslot{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.mini i{display:inline-flex;align-items:center;padding:2px 6px 2px 2px}.mini .ico{width:20px;height:20px;margin-right:4px;padding:1px;border:0;background:none}
+.bcard p{font-size:14px;line-height:1.6}.note{font-size:13px;line-height:1.6}
+.sum li{margin:6px 0;line-height:1.65}
+.gres div{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.gres .ico{width:24px;height:24px}
 </style></head><body>
 <header class="top"><div class="logo">MD2<b>.GG</b><small>마던 메타 · 빌드 도우미</small></div><nav>
 <button data-t="meta" class="on">메타</button><button data-t="tier">티어표</button><button data-t="builds">빌드</button><button data-t="bosses">보스</button><button data-t="hero">내 캐릭터</button><button data-t="build">빌드 짜기</button><button data-t="dex">도감</button></nav>
@@ -180,7 +199,10 @@ const SLOTS=[
  {k:'tal1',n:'부적 1',cat:'talismans'},{k:'tal2',n:'부적 2',cat:'talismans'},{k:'tal3',n:'부적 3',cat:'talismans'},
 ];
 const ENCH_N=1;
-const byId={};for(const c in DATA)for(const i of DATA[c])byId[c+':'+i.id]=i;
+const byId={};for(const c in DATA)for(const i of DATA[c]){byId[c+':'+i.id]=i;i._c=c}
+// 장비 사진(dungeonsdb.com 게임 데이터 이미지). 인챈트는 사진이 없어서 글자 표시.
+const ICAT={Offensive:'공',Defensive:'방',Utility:'보',Ranged:'원',Melee:'근'};
+function ico(i,big){if(!i)return'';const k=big?' big':'';if(i._c==='enchantments')return`<span class="ico en${k}">${ICAT[i.cat]||'✦'}</span>`;return`<img class="ico${k}" src="img/${i._c}-${i.id}.webp" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`}
 const ench={};for(const e of DATA.enchantments)ench[e.id]=e;
 let st={};try{st=JSON.parse(localStorage.getItem('mcd2')||'{}')}catch(e){}
 function loadHash(){if(location.hash.length>1)try{st=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))))}catch(e){}}
@@ -193,7 +215,7 @@ function render(){
  for(const s of SLOTS){
   const cur=st[s.k]||{};const it=cur.i&&byId[s.cat+':'+cur.i];
   const d=document.createElement('div');d.className='slot';
-  d.innerHTML=`<h3>${s.n}</h3><button class="pick ${it?'filled':''}">${it?`${badge(it.tier)}<b class="${it.rarity}">${it.name}</b><small>${(it.effect||'').slice(0,90)}</small>${chips(it)}`:'+ 고르기'}</button>`;
+  d.innerHTML=`<h3>${s.n}</h3><button class="pick ${it?'filled':''}">${it?`${ico(it)}${badge(it.tier)}<b class="${it.rarity}">${it.name}</b><small>${(it.effect||'').slice(0,90)}</small>${chips(it)}`:'+ 고르기'}</button>`;
   d.querySelector('.pick').onclick=()=>openPicker(s.n,DATA[s.cat].filter(s.f||(()=>true)),x=>{st[s.k]={i:x?x.id:null,e:[]};save();render()});
   if(s.ench&&it){
    const w=document.createElement('div');
@@ -247,7 +269,7 @@ function drawPick(){
  $('#mt').innerHTML=['전체',...TAGRULES.map(x=>x[0])].map(t=>`<button class="${(t==='전체'?'':t)===pickTag?'on':''}" data-t="${t}">${t}</button>`).join('');
  document.querySelectorAll('#mt button').forEach(b=>b.onclick=()=>{pickTag=b.dataset.t==='전체'?'':b.dataset.t;drawPick()});
  const r=pickList.filter(i=>(!pickTag||tagsOf(i).includes(pickTag))&&(!q||(i.name+' '+(i.en||'')+' '+(i.effect||i.desc||'')).toLowerCase().includes(q)));
- $('#mlist').innerHTML=`<div class="row" data-n="-1"><span class="e">비우기</span></div>`+r.map((i,n)=>`<div class="row" data-n="${pickList.indexOf(i)}">${badge(i.tier)}<b class="${i.rarity||''}">${i.name}</b><div class="e">${i.effect||i.desc||''}</div></div>`).join('');
+ $('#mlist').innerHTML=`<div class="row" data-n="-1"><span class="e">비우기</span></div>`+r.map((i,n)=>`<div class="row" data-n="${pickList.indexOf(i)}">${ico(i)}${badge(i.tier)}<b class="${i.rarity||''}">${i.name}</b><div class="e">${i.effect||i.desc||''}</div></div>`).join('');
  document.querySelectorAll('#mlist .row').forEach(rw=>rw.onclick=()=>{const n=+rw.dataset.n;$('#modal').classList.remove('on');pickCb(n<0?null:pickList[n])});
 }
 $('#mq').oninput=drawPick;$('#mclose').onclick=()=>$('#modal').classList.remove('on');
@@ -264,7 +286,7 @@ function dex(){
   const AP={'Melee weapon':'근접','Ranged weapon':'원거리','Helmet':'투구','Chest':'가슴','Leggings':'각반','Boots':'부츠'};
   const meta=[i.type==='melee'?'근접':i.type==='ranged'?'원거리':'',i.slot,i.set&&i.set+' 세트',i.hit&&'타격 '+i.hit,i.dps&&'DPS '+i.dps,i.weight,i.souls&&`영혼 ${i.souls}`,i.cooldown&&`쿨 ${i.cooldown}`,i.applies!==undefined&&('대상: '+(i.applies?i.applies.split(', ').map(a=>AP[a]||a).join('·'):'방어구'))].filter(Boolean).join(' · ');
   const eff=i.tiers?i.tiers.map((x,n)=>`${'I'.repeat(n+1)}: ${x}`).join('<br>')+(i.uniq?`<br>유일: ${i.uniq}`:''):(i.effect||i.desc||'');
-  return `<div class="row">${badge(i.tier)}<b class="${i.rarity||''}">${i.name}</b> <small>${meta}</small><div class="e">${eff}${i.flavor?`<br><i>${i.flavor}</i>`:''}</div></div>`}).join('');
+  return `<div class="row">${ico(i)}${badge(i.tier)}<b class="${i.rarity||''}">${i.name}</b> <small>${meta}</small><div class="e">${eff}${i.flavor?`<br><i>${i.flavor}</i>`:''}</div></div>`}).join('');
 }
 ['dcat','dq','dtier'].forEach(id=>$('#'+id).oninput=dex);
 const PAGES=['meta','tier','builds','bosses','hero','build','dex'];
@@ -326,7 +348,7 @@ function renderHero(){
  let html=`<div class="hhead"><b>레벨 ${hero.level??'?'}</b>${hero.power!=null?`<span class="chip c-공격">파워 ${hero.power}</span>`:''}</div>`;
  for(const s of SLOTS){
   const g=hero.gear[s.k];
-  if(!g){html+=`<div class="hrow"><div class="sl">${s.n}</div><div class="ef" style="color:var(--mut)">비어 있음</div></div>`;continue}
+  if(!g){html+=`<div class="hrow"><div class="hmain"><div class="sl">${s.n}</div><div class="ef" style="color:var(--mut)">비어 있음</div></div></div>`;continue}
   const nm=g.it?g.it.name:pretty(g.tag);
   let eff='';
   if(g.it&&g.it.effect)eff+=`<div class="ef">${esc(g.it.effect)}</div>`;
@@ -334,7 +356,7 @@ function renderHero(){
   for(const r of g.rolled)eff+=`<div class="ef">· ${esc(r.n)}${r.tr&&r.tr!=='Unique'?' '+r.tr:''}${r.tx?': '+esc(r.tx):''}</div>`;
   for(const e of g.ens)eff+=`<div class="en">인챈트 ${esc(e.en?e.en.name:pretty(e.tg))} ${e.tr}${e.tx?': '+esc(e.tx):''}</div>`;
   if(g.it)add(g.it);for(const r of g.rolled)add({effect:r.tx||r.n});for(const e of g.ens)add({effect:e.tx});
-  html+=`<div class="hrow"><div class="sl">${s.n}${g.pw>0?' · 파워 '+g.pw:''}</div><div class="nm rar-${g.rar}">${esc(nm)}${RARKO[g.rar]&&g.rar!=='Common'?` <small>(${RARKO[g.rar]})</small>`:''} ${g.it?chips(g.it):''}</div>${eff}</div>`;
+  html+=`<div class="hrow">${g.it?ico(g.it,1):''}<div class="hmain"><div class="sl">${s.n}${g.pw>0?' · 파워 '+g.pw:''}</div><div class="nm rar-${g.rar}">${esc(nm)}${RARKO[g.rar]&&g.rar!=='Common'?` <small>(${RARKO[g.rar]})</small>`:''} ${g.it?chips(g.it):''}</div>${eff}</div></div>`;
  }
  const pills=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<span class="pill c-${t}">${t} ${c}</span>`).join('');
  const tips=[];
@@ -421,7 +443,7 @@ function openItem(c,id){
  if(ex.quest&&ex.quest.length)drop+=`<p>퀘스트 보상: <b>${ex.quest.join(', ')}</b></p>`;
  const ub=used(c,id).map(b=>BUILDS.find(x=>x.id===b)).filter(Boolean);
  const mine=Object.keys(GEARCAT).find(s=>GEARCAT[s]===c);
- openDlg(`<button class="x">닫기</button><div style="font-size:13px;color:var(--mut)">${CATNAME[c]}${i.rarity==='unique'?' · 유일':''}</div><h2>${tchip(t)}<span class="${rcls(i.rarity)}">${i.name}</span> <small style="color:var(--mut);font-size:12px">${i.en||''}</small></h2>${chips(i)}<div class="kv">${kv}</div><h3 style="color:var(--ac)">효과</h3><ul class="how">${eff}</ul>${i.flavor?`<p class="note"><i>${i.flavor}</i></p>`:''}${drop?`<h3 style="color:var(--ac)">어디서 구해?</h3>${drop}`:''}${ub.length?`<h3 style="color:var(--ac)">이 장비를 쓰는 빌드</h3><div class="tags">${ub.map(b=>`<span style="cursor:pointer" data-build="${b.id}">${b.title}</span>`).join('')}</div>`:''}${c!=='enchantments'?`<p><button class="chipbar-btn" data-addp="${c}:${id}" style="background:var(--ac);color:#02121a;border:0;border-radius:10px;padding:6px 14px;cursor:pointer;font-weight:700">빌드 짜기에 넣기</button></p>`:''}`);
+ openDlg(`<button class="x">닫기</button><div style="font-size:13px;color:var(--mut)">${CATNAME[c]}${i.rarity==='unique'?' · 유일':''}</div><h2 class="dh">${ico(i,1)}${tchip(t)}<span class="${rcls(i.rarity)}">${i.name}</span> <small style="color:var(--mut);font-size:12px">${i.en||''}</small></h2>${chips(i)}<div class="kv">${kv}</div><h3 style="color:var(--ac)">효과</h3><ul class="how">${eff}</ul>${i.flavor?`<p class="note"><i>${i.flavor}</i></p>`:''}${drop?`<h3 style="color:var(--ac)">어디서 구해?</h3>${drop}`:''}${ub.length?`<h3 style="color:var(--ac)">이 장비를 쓰는 빌드</h3><div class="tags">${ub.map(b=>`<span style="cursor:pointer" data-build="${b.id}">${b.title}</span>`).join('')}</div>`:''}${c!=='enchantments'?`<p><button class="chipbar-btn" data-addp="${c}:${id}" style="background:var(--ac);color:#02121a;border:0;border-radius:10px;padding:6px 14px;cursor:pointer;font-weight:700">빌드 짜기에 넣기</button></p>`:''}`);
 }
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-build]');if(b){openBuild(b.dataset.build);return}
@@ -437,7 +459,7 @@ function addToPlanner(c,id){
 // ---- 빌드 상세 ----
 function openBuild(id){
  const b=BUILDS.find(x=>x.id===id);if(!b)return;
- const slots=Object.keys(SLOTLBL).filter(s=>b.gear[s]).map(s=>{const c=GEARCAT[s],i=byId[c+':'+b.gear[s]];return `<div class="lslot" data-item="${c}:${i.id}"><small>${SLOTLBL[s]}</small><b class="${rcls(i.rarity)}">${i.name}</b>${tchip(itemTier(c,i))}${chips(i)}</div>`}).join('');
+ const slots=Object.keys(SLOTLBL).filter(s=>b.gear[s]).map(s=>{const c=GEARCAT[s],i=byId[c+':'+b.gear[s]];return `<div class="lslot" data-item="${c}:${i.id}">${ico(i,1)}<small>${SLOTLBL[s]}</small><b class="${rcls(i.rarity)}">${i.name}</b>${tchip(itemTier(c,i))}${chips(i)}</div>`}).join('');
  openDlg(`<button class="x">닫기</button><div style="color:var(--mut);font-size:13px">${b.stage} 빌드 · 사용자 제보 빌드</div><h2>${tchip(b.tier)}${b.title}<span class="diff ${b.diff}">${b.diff}</span></h2><div class="tags">${b.tags.map(t=>`<span>${t}</span>`).join('')}</div><p>${b.desc}</p><h3 style="color:var(--ac)">장비 구성</h3><div class="loadout">${slots}</div>${b.ench.length?`<h3 style="color:var(--ac)">인챈트</h3><div class="enl">${b.ench.map(e=>`<span data-item="enchantments:${e}">${ench[e].name}</span>`).join('')}</div>`:''}<h3 style="color:var(--ac)">이렇게 해</h3><ul class="how">${b.how.map(x=>`<li>${x}</li>`).join('')}</ul><p><b>약점:</b> ${b.weak}</p><p><b>어디서 구해:</b> ${b.farm}</p><p><button id="bload" style="background:var(--ac);color:#02121a;border:0;border-radius:10px;padding:8px 16px;cursor:pointer;font-weight:700">이 빌드를 빌드 짜기로 가져가기</button></p>`);
  $('#bload').onclick=()=>{st={};for(const[s,i]of Object.entries(b.gear))st[s]={i,e:[]};for(const e of b.ench){for(const s of SLOTS){const cur=st[s.k];if(!cur||!s.ench||cur.e.length>=ENCH_N)continue;const en=ench[e];if(en&&fits(en,s)){cur.e.push({id:e,l:3});break}}}save();render();closeDlg();tab('build')};
 }
@@ -445,11 +467,11 @@ function openBuild(id){
 function renderMeta(){
  const topBuilds=BUILDS.filter(b=>b.tier==='S').slice(0,4);
  const wtop=(c)=>DATA.weapons.filter(w=>w.ex&&w.ex.wc===c&&w.ex.dps).sort((a,b)=>b.ex.dps-a.ex.dps).slice(0,3);
- const wsec=['경량','중형','중량','활','석궁'].map(c=>`<div><div class="note" style="margin-bottom:4px">${c} ${['활','석궁'].includes(c)?'(순간 DPS)':'(콤보 DPS)'}</div>${wtop(c).map((w,n)=>`<div class="trow" data-item="weapons:${w.id}" style="grid-template-columns:20px 1fr 60px"><span style="color:var(--mut)">${n+1}</span><span class="nm ${rcls(w.rarity)}">${w.name}</span><span class="pk"><b>${w.ex.dps}</b></span></div>`).join('')}</div>`).join('');
+ const wsec=['경량','중형','중량','활','석궁'].map(c=>`<div><div class="note" style="margin-bottom:4px">${c} ${['활','석궁'].includes(c)?'(순간 DPS)':'(콤보 DPS)'}</div>${wtop(c).map((w,n)=>`<div class="trow" data-item="weapons:${w.id}" style="grid-template-columns:20px 1fr 60px"><span style="color:var(--mut)">${n+1}</span><span class="nm ${rcls(w.rarity)}">${ico(w)}${w.name}</span><span class="pk"><b>${w.ex.dps}</b></span></div>`).join('')}</div>`).join('');
  const all=[];for(const c of ['weapons','armor','artifacts','talismans'])for(const i of DATA[c])if(used(c,i.id).length)all.push([c,i,used(c,i.id).length]);
  for(const e of DATA.enchantments)if(used('enchantments',e.id).length)all.push(['enchantments',e,used('enchantments',e.id).length]);
  all.sort((a,b)=>b[2]-a[2]||a[1].name.localeCompare(b[1].name));
- const picks=all.slice(0,12).map(([c,i,n])=>`<div class="trow" data-item="${c}:${i.id}" style="grid-template-columns:70px 1fr 1.2fr 50px"><span class="note">${CATNAME[c]}</span><span class="nm ${rcls(i.rarity)}">${i.name}</span><div class="dpsbar"><i style="width:${n/BUILDS.length*100}%"></i></div><span class="pk"><b>${Math.round(n/BUILDS.length*100)}%</b></span></div>`).join('');
+ const picks=all.slice(0,12).map(([c,i,n])=>`<div class="trow" data-item="${c}:${i.id}" style="grid-template-columns:70px 1fr 1.2fr 50px"><span class="note">${CATNAME[c]}</span><span class="nm ${rcls(i.rarity)}">${ico(i)}${i.name}</span><div class="dpsbar"><i style="width:${n/BUILDS.length*100}%"></i></div><span class="pk"><b>${Math.round(n/BUILDS.length*100)}%</b></span></div>`).join('');
  const weakBoss=BOSSES.filter(b=>b.weak&&b.type==='보스').map(b=>`<div class="bossrow" style="grid-template-columns:1fr 1fr" data-boss="${b.slug}"><span>${b.name}</span><span><span class="weak">${b.weak} +50%</span></span></div>`).join('');
  $('#p-meta').innerHTML=`<div class="hero-banner"><h1>MD2<span style="color:var(--ac2)">.GG</span> · 마던 메타</h1><p>마인크래프트 던전스 2 장비·빌드·보스 데이터를 한눈에. 2026-10 기준.</p><div class="stats"><span>무기 <b>${DATA.weapons.length}</b></span><span>방어구 <b>${DATA.armor.length}</b></span><span>유물 <b>${DATA.artifacts.length}</b></span><span>부적 <b>${DATA.talismans.length}</b></span><span>인챈트 <b>${DATA.enchantments.length}</b></span><span>추천 빌드 <b>${BUILDS.length}</b></span><span>보스 <b>${BOSSES.length}</b></span></div></div>
  <div class="sec"><h2>지금 제일 센 빌드</h2><div class="grid2">${topBuilds.map(bcard).join('')}</div><p class="note"><span class="tg" style="cursor:pointer" onclick="tab('builds')">추천 빌드 전부 보기 →</span></p></div>
@@ -458,14 +480,14 @@ function renderMeta(){
  <div class="sec"><h2>피해가 어떻게 겹쳐?</h2><div class="panel"><div class="formula"><div><b>×2</b><small>힘 상태</small></div><div><b>×1.5</b><small>치명타</small></div><div><b>×2.33</b><small>전사의 북</small></div><div><b>×3</b><small>힘 + 치명타</small></div></div><p>서로 다른 종류의 버프는 <b>곱해지고</b>, 같은 종류(치명타 피해 증가 여러 개)는 <b>더해져</b>. 한 가지에 몰지 말고 여러 종류로 퍼뜨려. (연습 인형 측정, 10월 1일)</p></div></div>
  <div class="sec"><h2>보스 약점 한눈에</h2><div class="panel"><div>${weakBoss}</div><p class="note">약점 속성 장비를 챙기면 +50%야. 자세한 건 보스 탭에서 봐.</p></div></div>`;
 }
-const bcard=b=>`<div class="panel bcard" data-build="${b.id}"><div>${tchip(b.tier)}<span class="note">${b.stage}</span><span class="diff ${b.diff}">${b.diff}</span></div><h3>${b.title}</h3><p>${b.blurb}</p><div class="tags">${b.tags.map(t=>`<span>${t}</span>`).join('')}</div><div class="mini">${Object.entries(b.gear).slice(0,6).map(([s,id])=>`<i>${byId[GEARCAT[s]+':'+id].name}</i>`).join('')}</div></div>`;
+const bcard=b=>`<div class="panel bcard" data-build="${b.id}"><div>${tchip(b.tier)}<span class="note">${b.stage}</span><span class="diff ${b.diff}">${b.diff}</span></div><h3>${b.title}</h3><p>${b.blurb}</p><div class="tags">${b.tags.map(t=>`<span>${t}</span>`).join('')}</div><div class="mini">${Object.entries(b.gear).slice(0,6).map(([s,id])=>`<i>${ico(byId[GEARCAT[s]+':'+id])}${byId[GEARCAT[s]+':'+id].name}</i>`).join('')}</div></div>`;
 // ---- 티어표 ----
 let tierSel='melee',armorSlot='';
 function renderTier(){
  const tabs=[['melee','근접 무기'],['ranged','원거리 무기'],['armor','방어구'],['artifacts','유물'],['talismans','부적'],['enchantments','인챈트']];
  let body='';
  const row=(c,i,extra)=>{const ex=i.ex||{},t=itemTier(c,i);const maxd=extra&&extra.max;
-  return `<div class="trow" data-item="${c}:${i.id}">${tchip(t)}<div><div class="nm ${rcls(i.rarity)}">${i.name}</div><div class="sub">${i.en||''}${i.set?' · '+i.set+' 세트':''}${i.slot?' · '+i.slot:''}</div></div><div class="bar2">${extra&&extra.dps?`<div class="dpsbar"><i style="width:${Math.min(100,extra.dps/maxd*100)}%"></i></div><div class="dpsv">${extra.dps}${extra.wr?` · ${extra.wc||''} ${extra.wn}개 중 ${extra.wr}위`:''}</div>`:`<div style="font-size:13px;color:#bfdcf0">${(i.effect||i.desc||'').slice(0,110)}</div>`}</div><div class="pk">${used(c,i.id).length?`<b>${pickPct(c,i.id)}%</b><br>채택`:''}</div></div>`};
+  return `<div class="trow" data-item="${c}:${i.id}">${tchip(t)}<div class="nmw">${ico(i,1)}<div><div class="nm ${rcls(i.rarity)}">${i.name}</div><div class="sub">${i.en||''}${i.set?' · '+i.set+' 세트':''}${i.slot?' · '+i.slot:''}</div></div></div><div class="bar2">${extra&&extra.dps?`<div class="dpsbar"><i style="width:${Math.min(100,extra.dps/maxd*100)}%"></i></div><div class="dpsv">${extra.dps}${extra.wr?` · ${extra.wc||''} ${extra.wn}개 중 ${extra.wr}위`:''}</div>`:`<div class="tdesc">${(i.effect||i.desc||'').slice(0,110)}</div>`}</div><div class="pk">${used(c,i.id).length?`<b>${pickPct(c,i.id)}%</b><br>채택`:''}</div></div>`};
  if(tierSel==='melee'||tierSel==='ranged'){
   const ws=DATA.weapons.filter(w=>w.type===tierSel);const classes=tierSel==='melee'?['경량','중형','중량','기타']:['활','석궁'];
   for(const cl of classes){const g=ws.filter(w=>(w.ex&&w.ex.wc||'기타')===cl).sort((a,b)=>((b.ex&&b.ex.dps)||0)-((a.ex&&a.ex.dps)||0));if(!g.length)continue;const max=Math.max(...g.map(w=>(w.ex&&w.ex.dps)||0))||1;
@@ -504,7 +526,7 @@ document.addEventListener('click',e=>{const w=e.target.closest('[data-bw]');if(w
 const SIDX=[];for(const c of ['weapons','armor','artifacts','talismans'])for(const i of DATA[c])SIDX.push([c,i]);for(const e of DATA.enchantments)SIDX.push(['enchantments',e]);
 $('#gq').oninput=e=>{const q=e.target.value.trim().toLowerCase();const box=$('#gres');if(!q){box.style.display='none';return}
  const r=SIDX.filter(([c,i])=>(i.name+' '+(i.en||'')).toLowerCase().includes(q)).slice(0,12);
- box.innerHTML=r.map(([c,i])=>`<div data-gi="${c}:${i.id}">${tchip(itemTier(c,i))}<b class="${rcls(i.rarity)}">${i.name}</b> <small>${CATNAME[c]} · ${i.en||''}</small></div>`).join('')||'<div><small>결과 없음</small></div>';box.style.display='block'};
+ box.innerHTML=r.map(([c,i])=>`<div data-gi="${c}:${i.id}">${ico(i)}${tchip(itemTier(c,i))}<b class="${rcls(i.rarity)}">${i.name}</b> <small>${CATNAME[c]} · ${i.en||''}</small></div>`).join('')||'<div><small>결과 없음</small></div>';box.style.display='block'};
 $('#gres').onclick=e=>{const d=e.target.closest('[data-gi]');if(d){const[c,id]=d.dataset.gi.split(':');$('#gres').style.display='none';$('#gq').value='';openItem(c,id)}};
 document.addEventListener('click',e=>{if(!e.target.closest('.gsearch'))$('#gres').style.display='none'});
 
