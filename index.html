@@ -334,8 +334,10 @@ function readItem(e){
 function describeHero(doc){
  const b=doc.CharacterSaveV1;if(!b)throw new Error('캐릭터 저장 파일이 아니야');
  const meta=b.MetaData||{};const gear={};
- for(const e of (b.Inventory&&b.Inventory.Entries)||[]){const k=SLOTMAP[e.EquippedSlot];if(k)gear[k]=readItem(e)}
- return {level:meta.Level,power:meta.PowerLevel,gear};
+ const bag=[];
+ for(const e of (b.Inventory&&b.Inventory.Entries)||[]){const k=SLOTMAP[e.EquippedSlot];if(k)gear[k]=readItem(e);else{const g=readItem(e);if(g.it&&g.it._c!=='enchantments')bag.push(g)}}
+ bag.sort((x,y)=>(y.pw||0)-(x.pw||0));
+ return {level:meta.Level,power:meta.PowerLevel,gear,bag};
 }
 function heroTexts(h){
  const L=[];
@@ -366,26 +368,33 @@ function renderHero(){
  if(!(cnt['생존']))tips.push('체력 회복이나 받는 피해를 줄이는 효과가 없어. 하나쯤 넣으면 안 죽어.');
  if(!(cnt['공격']||cnt['치명타']))tips.push('피해를 올리는 효과가 안 보여.');
  if(!hero.gear.melee&&!hero.gear.ranged)tips.push('무기가 없어.');
- html=`<div class="sum" style="margin:0 0 8px"><h2>한눈에 보기</h2><div class="pills">${pills||'<small>효과 없음</small>'}</div>${tips.map(t=>`<div class="tip bad">${t}</div>`).join('')}${live?`<div class="ai"><button id="aibtn">AI 약점 분석</button> <small>지금 장비를 Gemini가 보고 약점과 바꿀 장비를 알려 줘.</small><div id="aiout">${aiCache||''}</div></div>`:''}</div>`+html;
+ html=`<div class="sum" style="margin:0 0 8px"><h2>한눈에 보기</h2><div class="pills">${pills||'<small>효과 없음</small>'}</div>${tips.map(t=>`<div class="tip bad">${t}</div>`).join('')}${live?`<div class="ai"><button id="aibtn">AI 약점 분석</button> <small>지금 장비를 Gemini가 보고 약점과, 가방에 있는 것 중 뭘로 바꾸면 좋을지 알려 줘.</small><div id="aiout">${aiCache||''}</div></div>`:''}</div>`+html;
  el.innerHTML=html;
  const ab=$('#aibtn');if(ab)ab.onclick=runAI;
 }
 // ===== AI 약점 분석 =====
 let aiCache='';
+function aiKind(i){return i._c==='armor'?(i.slot||'방어구'):i._c==='weapons'?(i.type==='ranged'?'원거리 무기':'근접 무기'):CATNAME[i._c]}
+function aiItem(g){
+ let t=`${g.it?g.it.name:pretty(g.tag)}${RARKO[g.rar]?' ('+RARKO[g.rar]+')':''}${g.pw>0?' 파워 '+g.pw:''}${g.lvl?' 레벨 '+g.lvl+'/3':''}`;
+ if(g.it&&g.it.effect)t+=` | 효과: ${g.it.effect}`;
+ if(g.it&&g.it.ex&&g.it.ex.dps)t+=` | DPS ${g.it.ex.dps}`;
+ for(const r of g.rolled)t+=` | 추가 효과: ${r.n}${r.tx?' '+r.tx:''}`;
+ for(const e of g.ens)t+=` | 인챈트: ${e.en?e.en.name:pretty(e.tg)} ${e.tr}${e.tx?' '+e.tx:''}`;
+ return t;
+}
 function aiPrompt(){
  const L=['[내 캐릭터] 레벨 '+(hero.level??'?')+(hero.power!=null?', 파워 '+hero.power:'')];
  for(const s of SLOTS){const g=hero.gear[s.k];
   if(!g){L.push(`- ${s.n}: 비어 있음`);continue}
-  const nm=g.it?g.it.name:pretty(g.tag);
-  let t=`- ${s.n}: ${nm}${RARKO[g.rar]?' ('+RARKO[g.rar]+')':''}${g.pw>0?' 파워 '+g.pw:''}${g.lvl?' 레벨 '+g.lvl+'/3':''}`;
-  if(g.it&&g.it.effect)t+=` | 효과: ${g.it.effect}`;
-  if(g.it&&g.it.ex&&g.it.ex.dps)t+=` | DPS ${g.it.ex.dps}`;
-  for(const r of g.rolled)t+=` | 추가 효과: ${r.n}${r.tx?' '+r.tx:''}`;
-  for(const e of g.ens)t+=` | 인챈트: ${e.en?e.en.name:pretty(e.tg)} ${e.tr}${e.tx?' '+e.tx:''}`;
-  L.push(t)}
+  L.push(`- ${s.n}: `+aiItem(g))}
+ const bag=(hero.bag||[]).slice(0,80);
+ L.push('',`[가방에 있는 장비] ${bag.length}개${(hero.bag||[]).length>80?' (파워 높은 80개만)':''}`);
+ if(!bag.length)L.push('- 없음');
+ for(const g of bag)L.push(`- ${aiKind(g.it)}: `+aiItem(g));
  L.push('','[보스 약점]');
  for(const b of BOSSES.filter(b=>b.weak&&b.type==='보스'))L.push(`- ${b.name}: ${b.weak} 피해 +50%`);
- L.push('','[추천 후보] (S·A 등급)');
+ L.push('','[구하면 좋은 장비] (S·A 등급, 가방에 마땅한 게 없을 때만)');
  for(const c of ['weapons','armor','artifacts','talismans','enchantments'])
   L.push(`${CATNAME[c]}: `+DATA[c].filter(i=>i.tier==='S'||i.tier==='A').map(i=>`${i.name}(${i.tier}${i.slot?','+i.slot:''}${i.weight?','+i.weight:''})`).join(', '));
  L.push('','[추천 빌드 이름]',BUILDS.map(b=>`${b.title}(${b.tags.join('/')})`).join(', '));
