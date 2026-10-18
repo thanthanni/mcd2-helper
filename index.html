@@ -133,9 +133,15 @@ span.ico{display:inline-flex;align-items:center;justify-content:center;font-size
 .ai{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.ai button{background:var(--ac);color:#10140f;border:0;border-radius:8px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer}.ai button:disabled{opacity:.6}
 .aitext{white-space:pre-wrap;background:#14171c;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:10px 0 4px;font-size:15px;line-height:1.75}
 .ai .bar input{flex:1}.ai a{color:var(--ac)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px}.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}.tile small{display:block;color:var(--mut);font-size:12.5px}.tile b{font-size:19px}
+.chart{position:relative;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px}.ch-t{font-weight:700;margin-bottom:4px}.chart svg{width:100%;height:auto;display:block}
+.chart .ln{fill:none;stroke:var(--ac);stroke-width:2;stroke-linejoin:round}.chart .ax{stroke:var(--line);stroke-width:1}.chart .tk{fill:var(--mut);font-size:14px}.chart .cx{stroke:var(--mut);stroke-width:1;stroke-dasharray:3 3}.chart .dot{fill:var(--ac);stroke:var(--card);stroke-width:2}
+.ttip{position:absolute;top:30px;background:#0f1115;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12.5px;pointer-events:none;white-space:nowrap}
+.sess{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}.sl2{font-size:14px;color:#c9ced8;margin-top:2px}.sitems{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.sitems .ico{margin:0}.sitems .uq .ico{border-color:#ffd166}
+.rbar{display:inline-block;margin-right:14px}.tl div{padding:4px 0;border-bottom:1px solid #262b36;font-size:14.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.tl .ico{width:22px;height:22px;margin-right:2px}
 </style></head><body>
 <header class="top"><div class="logo">MD2<b>.GG</b><small>마던 메타 · 빌드 도우미</small></div><nav>
-<button data-t="meta" class="on">메타</button><button data-t="tier">티어표</button><button data-t="builds">빌드</button><button data-t="bosses">보스</button><button data-t="hero">내 캐릭터</button><button data-t="build">빌드 짜기</button><button data-t="dex">도감</button></nav>
+<button data-t="meta" class="on">메타</button><button data-t="tier">티어표</button><button data-t="builds">빌드</button><button data-t="bosses">보스</button><button data-t="hero">내 캐릭터</button><button data-t="log">기록</button><button data-t="build">빌드 짜기</button><button data-t="dex">도감</button></nav>
 <div class="gsearch"><input id="gq" placeholder="장비 검색 (한글·영어)" autocomplete="off"><div class="gres" id="gres"></div></div></header>
 <main>
 <section id="p-meta"></section>
@@ -147,6 +153,7 @@ span.ico{display:inline-flex;align-items:center;justify-content:center;font-size
  <div id="hsync" style="display:none;font-size:13px;margin:4px 0 8px"></div>
  <div id="hbody"></div>
 </section>
+<section id="p-log" style="display:none"><div id="lbody"></div></section>
 <section id="p-build" style="display:none">
  <details class="guide"><summary>처음이면 이것부터 (30초)</summary><ul>
   <li><b>빌드</b>는 내가 들고 다닐 장비 묶음이야. 무기 + 방어구 4칸 + 유물 3칸 + 부적 3칸.</li>
@@ -292,9 +299,9 @@ function dex(){
   return `<div class="row">${ico(i)}${badge(i.tier)}<b class="${i.rarity||''}">${i.name}</b> <small>${meta}</small><div class="e">${eff}${i.flavor?`<br><i>${i.flavor}</i>`:''}</div></div>`}).join('');
 }
 ['dcat','dq','dtier'].forEach(id=>$('#'+id).oninput=dex);
-const PAGES=['meta','tier','builds','bosses','hero','build','dex'];
+const PAGES=['meta','tier','builds','bosses','hero','log','build','dex'];
 function tab(n){PAGES.forEach(k=>{$('#p-'+k).style.display=k===n?'':'none';const b=document.querySelector('[data-t="'+k+'"]');if(b)b.classList.toggle('on',k===n)});
- if(n==='meta')renderMeta();if(n==='tier')renderTier();if(n==='builds')renderBuilds();if(n==='bosses')renderBosses();if(n==='dex')dex();if(n==='hero')renderHero();window.scrollTo(0,0)}
+ if(n==='meta')renderMeta();if(n==='tier')renderTier();if(n==='builds')renderBuilds();if(n==='bosses')renderBosses();if(n==='dex')dex();if(n==='hero')renderHero();if(n==='log')renderLog();window.scrollTo(0,0)}
 document.querySelectorAll('header.top nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
 $('#pre').innerHTML=PRESETS.map((p,n)=>`<button data-n="${n}"><b>${p.name}</b><small>${p.desc}</small></button>`).join('');
 document.querySelectorAll('#pre button').forEach(b=>b.onclick=()=>{
@@ -371,6 +378,80 @@ function renderHero(){
  html=`<div class="sum" style="margin:0 0 8px"><h2>한눈에 보기</h2><div class="pills">${pills||'<small>효과 없음</small>'}</div>${tips.map(t=>`<div class="tip bad">${t}</div>`).join('')}${live?`<div class="ai"><button id="aibtn">AI 약점 분석</button> <small>지금 장비를 Gemini가 보고 약점과, 가방에 있는 것 중 뭘로 바꾸면 좋을지 알려 줘.</small><div id="aiout">${aiCache||''}</div></div>`:''}</div>`+html;
  el.innerHTML=html;
  const ab=$('#aibtn');if(ab)ab.onclick=runAI;
+}
+
+// ===== 기록(전적) =====
+function itemByTag(tag){let m=GM.tags[tag];if(!m)m=GM.tags[String(tag).replace(/_Unique\d*$/,'')];return m?byId[m.c+':'+m.i]:null}
+const ATTRKO={Emeralds:'에메랄드',SpringStone:'메아리 조각',EnchantmentPoints:'인챈트 포인트'};
+const RARK={Common:'일반',Rare:'희귀',Special:'특별',Unique:'유일'};
+function placeName(t){return t?pretty(String(t)):'?'}
+function fmtDur(ms){const m=Math.round(ms/60000);return m<60?m+'분':Math.floor(m/60)+'시간 '+(m%60)+'분'}
+function fmtWhen(t){return new Date(t).toLocaleString('ko-KR',{month:'numeric',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit'})}
+function sessionsOf(ev){
+ const S=[];let cur=null;
+ for(const e of ev){if(!cur||e.at-cur.end>15*60000){cur={start:e.at,end:e.at,ev:[]};S.push(cur)}cur.end=e.at;cur.ev.push(e)}
+ for(const x of S){const t=x.ev.filter(e=>e.kind==='tick');x.l0=t.length?t[0].d.level:null;x.l1=t.length?t[t.length-1].d.level:null;x.p0=t.length?t[0].d.power:null;x.p1=t.length?t[t.length-1].d.power:null;
+  x.em=x.ev.filter(e=>e.kind==='attr'&&e.d.name==='Emeralds'&&e.d.delta>0).reduce((a,e)=>a+e.d.delta,0);
+  x.items=x.ev.filter(e=>e.kind==='item');x.quests=x.ev.filter(e=>e.kind==='quest').length;x.chests=x.ev.filter(e=>e.kind==='chest').reduce((a,e)=>a+e.d.n,0);
+  x.dur=Math.max(30000,x.end-x.start+30000)}
+ return S;
+}
+function lineChart(pts,label,unit){
+ if(pts.length<2)return `<div class="note">${label}: 기록이 두 번 이상 쌓이면 그래프가 생겨.</div>`;
+ const W=560,H=170,P=40,xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+ const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+ const X=x=>P+(x1===x0?0:(x-x0)/(x1-x0))*(W-P-10),Y=y=>H-26-(y1===y0?0.5:(y-y0)/(y1-y0))*(H-40);
+ const d=pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(' ');
+ const data=encodeURIComponent(JSON.stringify(pts.map(p=>[X(p[0]),Y(p[1]),p[0],p[1]])));
+ return `<div class="chart"><div class="ch-t">${label}</div><svg viewBox="0 0 ${W} ${H}" data-pts="${data}" data-unit="${unit}">
+ <line x1="${P}" y1="${H-26}" x2="${W-10}" y2="${H-26}" class="ax"/><text x="${P-6}" y="${Y(y1)+4}" class="tk" text-anchor="end">${y1}</text><text x="${P-6}" y="${Y(y0)+4}" class="tk" text-anchor="end">${y0}</text>
+ <text x="${P}" y="${H-4}" class="tk">${fmtWhen(x0)}</text><text x="${W-10}" y="${H-4}" class="tk" text-anchor="end">${fmtWhen(x1)}</text>
+ <path d="${d}" class="ln"/><line class="cx" y1="10" y2="${H-26}" style="display:none"/><circle class="dot" r="4" style="display:none"/><rect x="0" y="0" width="${W}" height="${H}" fill="transparent" class="hit"/></svg><div class="ttip" style="display:none"></div></div>`;
+}
+function wireCharts(root){
+ root.querySelectorAll('.chart svg').forEach(svg=>{
+  const pts=JSON.parse(decodeURIComponent(svg.dataset.pts)),tip=svg.parentNode.querySelector('.ttip'),cx=svg.querySelector('.cx'),dot=svg.querySelector('.dot');
+  svg.querySelector('.hit').onmousemove=e=>{const r=svg.getBoundingClientRect(),vx=(e.clientX-r.left)/r.width*560;let b=pts[0];for(const p of pts)if(Math.abs(p[0]-vx)<Math.abs(b[0]-vx))b=p;
+   cx.setAttribute('x1',b[0]);cx.setAttribute('x2',b[0]);cx.style.display='';dot.setAttribute('cx',b[0]);dot.setAttribute('cy',b[1]);dot.style.display='';
+   tip.style.display='';tip.textContent=`${fmtWhen(b[2])} · ${b[3]}${svg.dataset.unit}`;tip.style.left=Math.min(r.width-150,b[0]/560*r.width)+'px'};
+  svg.querySelector('.hit').onmouseleave=()=>{tip.style.display='none';cx.style.display='none';dot.style.display='none'};
+ });
+}
+function evText(e){const d=e.d||{},it=d.tag?itemByTag(d.tag):null,nm=it?it.name:(d.tag?pretty(d.tag):'');
+ switch(e.kind){
+  case 'level':return `레벨 업 ${d.from} → <b>${d.to}</b>`;
+  case 'power':return `파워 ${d.from} → <b>${d.to}</b>`;
+  case 'attr':return `${ATTRKO[d.name]||d.name} ${d.delta>0?'+':''}${d.delta} (지금 ${d.now})`;
+  case 'move':return `이동: ${placeName(d.to)}`;
+  case 'quest':return `퀘스트 완료: ${pretty(d.name)}`;
+  case 'chest':return `상자 ${d.n}개 열기`;
+  case 'item':return `${it?ico(it):''}얻음: <b class="rar-${d.rar}">${esc(nm)}</b> ${RARK[d.rar]?'('+RARK[d.rar]+')':''} 파워 ${d.pw}`;
+  case 'equip':return `${it?ico(it):''}착용: ${esc(nm)}`;
+  case 'upgrade':return `${it?ico(it):''}강화: ${esc(nm)} ${d.from} → ${d.to}`;
+  case 'gone':return `${it?ico(it):''}없어짐(분해·판매): ${esc(nm)}`;
+  case 'start':return `기록 시작 (레벨 ${d.level}, 장비 ${d.items}개)`;
+ }return e.kind}
+async function renderLog(){
+ const el=$('#lbody');
+ if(!live){el.innerHTML='<div class="empty">기록은 PC 프로그램에서만 쌓여. 게임할 때 도우미를 켜 두면 레벨, 얻은 장비, 에메랄드, 퀘스트를 알아서 적어 둬.</div>';return}
+ if(!heroFile){el.innerHTML='<div class="empty">내 캐릭터 탭에서 캐릭터를 먼저 골라 줘.</div>';return}
+ let ev=[];try{const t=await (await fetch('/api/history?name='+encodeURIComponent(heroFile))).text();ev=t.split('\n').filter(Boolean).map(l=>JSON.parse(l))}catch(e){}
+ if(!ev.length){el.innerHTML='<div class="empty">아직 기록이 없어. 도우미를 켠 채로 게임을 하면 쌓이기 시작해.</div>';return}
+ const S=sessionsOf(ev),ticks=ev.filter(e=>e.kind==='tick'),items=ev.filter(e=>e.kind==='item');
+ const total=S.reduce((a,x)=>a+x.dur,0),em=S.reduce((a,x)=>a+x.em,0),chests=S.reduce((a,x)=>a+x.chests,0),quests=ev.filter(e=>e.kind==='quest').length;
+ const t0=ticks[0]||{d:{}},t1=ticks[ticks.length-1]||{d:{}};
+ const byR={};for(const e of items)byR[e.d.rar]=(byR[e.d.rar]||0)+1;
+ const byLoc={};for(const e of items){const k=placeName(e.d.loc);byLoc[k]=(byLoc[k]||0)+1}
+ const tiles=[['기록된 플레이',fmtDur(total)],['판 수',S.length+'번'],['레벨',`${t0.d.level??'?'} → ${t1.d.level??'?'}`],['파워',`${t0.d.power??'?'} → ${t1.d.power??'?'}`],['얻은 에메랄드',em.toLocaleString()],['시간당 에메랄드',total>600000?Math.round(em/(total/3600000)).toLocaleString():'-'],['얻은 장비',items.length+'개'],['연 상자',chests+'개'],['완료 퀘스트',quests+'개']];
+ let h=`<div class="tiles">${tiles.map(([k,v])=>`<div class="tile"><small>${k}</small><b>${v}</b></div>`).join('')}</div>`;
+ h+=`<div class="grid2">${lineChart(ticks.map(e=>[e.at,e.d.power]),'파워','')}${lineChart(ticks.map(e=>[e.at,e.d.level]),'레벨','')}</div>`;
+ h+=`<div class="sec"><h2>얻은 장비 등급</h2><div class="panel">${['Unique','Special','Rare','Common'].filter(r=>byR[r]).map(r=>`<span class="rbar"><b class="rar-${r}">${RARK[r]}</b> ${byR[r]}개 (${Math.round(byR[r]/items.length*100)}%)</span>`).join(' ')||'<span class="note">아직 없음</span>'}
+  ${Object.keys(byLoc).length?`<div class="note" style="margin-top:8px">많이 얻은 곳: ${Object.entries(byLoc).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,n])=>`${esc(k)} ${n}개`).join(' · ')}</div>`:''}</div></div>`;
+ h+=`<div class="sec"><h2>판별 기록</h2>${S.slice().reverse().slice(0,30).map(x=>`<div class="sess"><div class="sh"><b>${fmtWhen(x.start)}</b> <span class="note">${fmtDur(x.dur)}</span></div>
+  <div class="sl2">레벨 ${x.l0}→${x.l1} · 파워 ${x.p0}→${x.p1} · 에메랄드 +${x.em.toLocaleString()} · 장비 ${x.items.length}개 · 상자 ${x.chests} · 퀘스트 ${x.quests}</div>
+  ${x.items.length?`<div class="sitems">${x.items.slice(0,12).map(e=>{const it=itemByTag(e.d.tag);return it?`<span title="${esc(it.name)} ${RARK[e.d.rar]||''} 파워 ${e.d.pw}" class="${e.d.rar==='Unique'?'uq':''}">${ico(it)}</span>`:''}).join('')}</div>`:''}</div>`).join('')}</div>`;
+ h+=`<div class="sec"><h2>최근에 생긴 일</h2><div class="panel tl">${ev.filter(e=>e.kind!=='tick').slice(-40).reverse().map(e=>`<div><span class="note">${fmtWhen(e.at)}</span> ${evText(e)}</div>`).join('')}</div></div>`;
+ el.innerHTML=h;wireCharts(el);
 }
 // ===== AI 약점 분석 =====
 let aiCache='';
