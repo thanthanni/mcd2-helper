@@ -46,6 +46,7 @@ main{max-width:1100px;margin:0 auto;padding:16px}
 .hhead{display:flex;gap:10px;align-items:center;margin:4px 0 8px;flex-wrap:wrap}.hhead b{font-size:17px}
 .empty{background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:14px;color:var(--mut)}
 /* ===== 기본 테마 ===== */
+.empty a.dl{display:inline-block;margin:10px 0 6px;padding:8px 14px;border-radius:8px;background:var(--ac);color:#10140f;font-weight:700;text-decoration:none}
 :root{--bg:#16181d;--card:#1f2228;--line:#30343d;--tx:#e6e8ec;--mut:#8d94a3;--ac:#5fb98a;--ac2:#5fb98a;--gold:#e3b54f;--S:#e06c6c;--A:#e39b4f;--B:#d9c35a;--C:#6fa8dc;--D:#8d94a3}
 body{background:var(--bg);color:var(--tx);min-height:100vh}
 
@@ -320,7 +321,7 @@ function heroTexts(h){
 }
 function renderHero(){
  const el=$('#hbody');
- if(!hero){el.innerHTML=live?'<div class="empty">캐릭터 저장 파일을 못 찾았어. 게임을 한 번 실행해서 저장되게 하거나, 위의 <b>캐릭터 파일 열기</b>로 직접 골라 줘.<br><small>Steam 판 저장 위치: %LOCALAPPDATA%\\Dungeons2\\Saved\\SaveGames (Character...sav)</small></div>':'<div class="empty">내가 지금 끼고 있는 장비를 보려면 <b>캐릭터 파일 열기</b>를 눌러서 게임 저장 파일(<code>Character...sav</code>)을 골라 줘.<br><small>Steam 판 저장 위치: %LOCALAPPDATA%\\Dungeons2\\Saved\\SaveGames (주소창에 붙여넣으면 열려). 이 앱을 PC에서 exe로 실행하면 자동으로 찾아서 게임 중에도 갱신돼.</small></div>';return}
+ if(!hero){el.innerHTML=live?'<div class="empty">캐릭터 저장 파일을 못 찾았어. 게임을 한 번 실행해서 저장되게 하거나, 위의 <b>캐릭터 파일 열기</b>로 직접 골라 줘.<br><small>Steam 판 저장 위치: %LOCALAPPDATA%\\Dungeons2\\Saved\\SaveGames (Character...sav)</small></div>':'<div class="empty"><b>웹에서는 내 캐릭터를 자동으로 못 읽어.</b> 게임 중에 내 장비(온라인 캐릭터 포함)를 자동으로 보려면 PC 프로그램을 받아 줘.<br><a class="dl" href="https://github.com/thanthanni/mcd2-helper/releases/latest/download/MCD2-Helper.exe">PC 프로그램 받기 (MCD2-Helper.exe)</a><br><small>처음 실행할 때 파란 \'Windows의 PC 보호\' 창이 뜨면 <b>추가 정보 → 실행</b>을 눌러. 한 번 실행하면 바탕화면에 바로가기가 생겨.</small><br><small>오프라인 캐릭터라면 위의 <b>캐릭터 파일 열기</b>로 저장 파일(%LOCALAPPDATA%\\Dungeons2\\Saved\\SaveGames)을 직접 골라도 돼.</small></div>';return}
  const cnt={};const add=o=>{for(const t of tagsOf(o))cnt[t]=(cnt[t]||0)+1};
  let html=`<div class="hhead"><b>레벨 ${hero.level??'?'}</b>${hero.power!=null?`<span class="chip c-공격">파워 ${hero.power}</span>`:''}</div>`;
  for(const s of SLOTS){
